@@ -20,8 +20,9 @@ public class WebSecurity {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request ->{
-                    request.requestMatchers("/actuator/**").permitAll();
-                    request.requestMatchers("/users/**","/h2-console/**").permitAll();}
+                    request.requestMatchers("/actuator/**","/h2-console/**").permitAll();
+                    request.requestMatchers("/user-service/**").permitAll();
+                    request.requestMatchers("/users/**").permitAll();}
                 )
                 .headers(headers->
                         headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)
