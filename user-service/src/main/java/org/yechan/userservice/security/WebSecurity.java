@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class WebSecurity {
     @Bean
-    public BCryptPasswordEncoder passwordEncoder(){
+    public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
     
@@ -19,12 +19,12 @@ public class WebSecurity {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(request ->{
-                    request.requestMatchers("/actuator/**","/h2-console/**").permitAll();
-                    request.requestMatchers("/user-service/**").permitAll();
-                    request.requestMatchers("/users/**").permitAll();}
+                .authorizeHttpRequests(request -> {
+                            request.requestMatchers("/actuator/**", "/h2-console/**").permitAll();
+                            request.requestMatchers("/user-service/**").permitAll();
+                        }
                 )
-                .headers(headers->
+                .headers(headers ->
                         headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)
                 );
         return http.build();
