@@ -1,59 +1,82 @@
 package org.yechan.userservice.security;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.security.reactive.PathRequest;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.authorization.AuthorizationDecision;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
-import org.springframework.stereotype.Component;
 import org.yechan.userservice.service.AuthenticationFilter;
 import org.yechan.userservice.service.UserService;
 
-@Component
+import java.util.function.Supplier;
+
+@Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class WebSecurity {
     
-    private final UserService userService;
-    private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    private final Environment env;
-    private final AuthenticationConfiguration authenticationConfiguration;
-    IpAddressMatcher hasIpAddress = new IpAddressMatcher("192.168.1.26");
+    private UserService userService;
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+    private Environment env;
     
-    @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().requestMatchers(String.valueOf(PathRequest.toStaticResources().atCommonLocations()));
+    public WebSecurity(UserService userService,
+                       BCryptPasswordEncoder bCryptPasswordEncoder,
+                       Environment env) {
+        this.userService = userService;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.env = env;
     }
     
+    public static final String ALLOWED_IP_ADDRESS = "192.168.1.26";
+    public static final String SUBNET = "/32";
+    public static final IpAddressMatcher ALLOWED_IP_ADDRESS_MATCHER = new IpAddressMatcher(ALLOWED_IP_ADDRESS + SUBNET);
+    public static final String IP_CHECK_PATH_PATTERN =  "/**";
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth->auth
-                        .requestMatchers("/actuator/**","/h2-console/**").permitAll()
-                        .requestMatchers("/**").access((authentication, context) -> new AuthorizationDecision(hasIpAddress.matches(context.getRequest())))
+    protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(PathRequest.toH2Console()).permitAll()
+                        .requestMatchers(IP_CHECK_PATH_PATTERN).access(this::hasIpAddress)
                 )
-                .addFilter(getAuthenticationFilter(authenticationConfiguration))
-                .headers(headers-> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
+                .addFilter(getAuthenticationFilter())
+                .csrf(AbstractHttpConfigurer::disable)
+                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
+                .userDetailsService(userService);
         return http.build();
     }
     
-    private AuthenticationFilter getAuthenticationFilter(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return new AuthenticationFilter(authenticationConfiguration.getAuthenticationManager(), userService, env);
+    private AuthorizationDecision hasIpAddress(Supplier<Authentication> authentication, RequestAuthorizationContext object) {
+        return new AuthorizationDecision(ALLOWED_IP_ADDRESS_MATCHER.matches(object.getRequest()));
     }
     
+    private AuthenticationFilter getAuthenticationFilter() throws Exception {
+        return new AuthenticationFilter(authenticationManager(userService,bCryptPasswordEncoder),userService,env);
+    }
     @Bean
-    AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(
+            UserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(passwordEncoder);
+        authenticationProvider.setUserDetailsService(userDetailsService);
+        
+        
+        ProviderManager providerManager = new ProviderManager(authenticationProvider);
+        providerManager.setEraseCredentialsAfterAuthentication(false);
+        
+        return providerManager;
     }
     
     
