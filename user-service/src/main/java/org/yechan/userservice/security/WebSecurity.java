@@ -40,7 +40,7 @@ public class WebSecurity {
         this.env = env;
     }
     
-    public static final String ALLOWED_IP_ADDRESS = "192.168.1.26";
+    public static final String ALLOWED_IP_ADDRESS = "192.168.25.40";
     public static final String SUBNET = "/32";
     public static final IpAddressMatcher ALLOWED_IP_ADDRESS_MATCHER = new IpAddressMatcher(ALLOWED_IP_ADDRESS + SUBNET);
     public static final String IP_CHECK_PATH_PATTERN =  "/**";
