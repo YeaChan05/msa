@@ -48,6 +48,7 @@ public class WebSecurity {
     protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(PathRequest.toH2Console()).permitAll()
                         .requestMatchers(IP_CHECK_PATH_PATTERN).access(this::hasIpAddress)
                 )
