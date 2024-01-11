@@ -3,8 +3,12 @@ server:
 spring:
   application:
     name: config-service
+  profiles:
+    active: native
   cloud:
     config:
       server:
+        native:
+          search-locations: file://${user.home}/IdeaProjects/msa/native-file-repo
         git:
-          uri: file:///Users/sin-yechan/IdeaProjects/msa/git-local-repo
+          uri: https://github.com/YeaChan05/git-local-repo
