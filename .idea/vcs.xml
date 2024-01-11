@@ -6,6 +6,7 @@
     <mapping directory="$PROJECT_DIR$/first-service" vcs="" />
     <mapping directory="$PROJECT_DIR$/gateway-spring-cloud" vcs="" />
     <mapping directory="$PROJECT_DIR$/gateway-zuul" vcs="" />
+    <mapping directory="$PROJECT_DIR$/git-local-repo" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/second-service" vcs="" />
     <mapping directory="$PROJECT_DIR$/user-service" vcs="" />
   </component>

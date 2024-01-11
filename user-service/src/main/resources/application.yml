@@ -3,6 +3,11 @@ server:
 spring:
   application:
     name: user-service
+  cloud:
+    config:
+      name: ecommerce
+  config:
+    import: optional:configserver:http://localhost:8888
   h2:
     console:
       enabled: true
@@ -28,6 +33,6 @@ logging:
   level:
     org.yechan.userservice: debug
 
-token:
-  expiration_time: 8640000
-  secret: user_token
+#token:
+#  expiration_time: 8640000
+#  secret: user_token
